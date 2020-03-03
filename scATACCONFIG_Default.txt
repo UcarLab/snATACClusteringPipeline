@@ -9,3 +9,5 @@ PEAKEXT	250	The amount to extend from the peak summits (3' and 5'). Peaks will b
 TOPPEAKS	200000	The maximum number of peaks used for pass 2 clustering.
 P2NUMPCA	50	The number of components used in pass 1.
 TOPVARIABLEPEAKS	25000	The number of variable peaks used in the final step of pass 2 clustering.
+MAXJOBS	20	The maximum number of child processes that will be created for concurrent processing.
+JOBCHECKRATE	30	How frequently (in seconds) to check to see if a job has finished before creating a new child process.

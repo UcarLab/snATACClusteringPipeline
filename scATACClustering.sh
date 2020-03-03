@@ -1,4 +1,3 @@
-##TODO: Add a parameter to limit the number of processors and implement a processor limit function
 
 ##########################################
 #Step 0: Read input & configuration files#
@@ -81,6 +80,16 @@ do
 				TOPVARIABLEPEAKS=${VALUE}
 			fi
 			;;
+		MAXJOBS)
+			if [[ ${VALUE} =~ ^[[:digit:]]+$ ]]; then
+				MAXJOBS=${VALUE}
+			fi
+			;;
+		JOBCHECKRATE)
+			if [[ ${VALUE} =~ ^[[:digit:]]+$ ]]; then
+				JOBCHECKRATE=${VALUE}
+			fi
+			;;
 	esac
 done < $CONFIGURATIONFILE 
 
@@ -96,8 +105,11 @@ echo "PEAKEXT ${PEAKEXT}"
 echo "TOPPEAKS ${TOPPEAKS}"
 echo "P2NUMPCA ${P2NUMPCA}"
 echo "TOPVARIABLEPEAKS ${TOPVARIABLEPEAKS}"
+echo "MAXJOBS ${MAXJOBS}"
+echo "JOBCHECKRATE ${JOBCHECKRATE}"
 
-if [ -z ${START} ] || [ -z ${END} ] || [ -z ${BINSIZE} ] || [ -z ${TOPBINS} ] || [ -z ${CLUSTERRES} ] || [ -z ${P1MINCLUSTERSIZE} ] || [ -z ${P1NUMPCA} ] || [ -z ${PEAKEXT} ] || [ -z ${TOPPEAKS} ] || [ -z ${TOPVARIABLEPEAKS} ];  then
+
+if [ -z ${START} ] || [ -z ${END} ] || [ -z ${BINSIZE} ] || [ -z ${TOPBINS} ] || [ -z ${CLUSTERRES} ] || [ -z ${P1MINCLUSTERSIZE} ] || [ -z ${P1NUMPCA} ] || [ -z ${P2NUMPCA} ] || [ -z ${PEAKEXT} ] || [ -z ${TOPPEAKS} ] || [ -z ${TOPVARIABLEPEAKS} ] || [ -z ${MAXJOBS} ] || [ -z ${JOBCHECKRATE} ];  then
 	echo "Please check that the configuration variables are the correct type (int (or float for CLUSTERRES)) and complete."
 	exit 1
 fi
@@ -116,6 +128,19 @@ done < $BAMFILELIST
 mkdir -p $OUTDIR
 cd $OUTDIR
 
+##############################################
+#Define function for limiting child processes#
+##############################################
+
+function checkConcurrentJobs {
+	#Based on the solution provided by user BruceH
+	#https://stackoverflow.com/questions/6593531/running-a-limited-number-of-child-processes-in-parallel-in-bash
+	while [ `jobs | wc -l` -ge $MAXJOBS ]
+	do
+		sleep $JOBCHECKRATE
+	done
+}
+
 ############################
 #Step1: Generate Bin Counts#
 ############################
@@ -131,7 +156,7 @@ if [ ${START} -le ${STEP} ] && [ ${END} -ge ${STEP} ]; then
 		mkdir -p "${SAMPLEDIR}"
 		rm -f ${SAMPLEDIR}/CompletionSummary*.txt
 		#Fork multiple java processes using the trailing &
-		java -jar ${SCRIPTPATH}/snATACClustering.jar generatebincounts ${BAMFILES[i]} ${CELLBARCODES[i]} $CHROMSIZES $BINSIZE $SAMPLEDIR > ${STEP1OUT}/${SAMPLEIDS[i]}.out &
+		checkConcurrentJobs; java -jar ${SCRIPTPATH}/snATACClustering.jar generatebincounts ${BAMFILES[i]} ${CELLBARCODES[i]} $CHROMSIZES $BINSIZE $SAMPLEDIR > ${STEP1OUT}/${SAMPLEIDS[i]}.out &
 	done
 
 	wait #Wait for the forked processes to finish
@@ -291,7 +316,7 @@ if [ ${START} -le ${STEP} ] && [ ${END} -ge ${STEP} ]; then
 		rm -f ${SAMPLEDIR}/clusterbam_*.bam
 		rm -f ${SAMPLEDIR}/CompletionSummary*.txt
 		SAMPLECLUSTERFILE=${STEP4OUT}/${SAMPLEIDS[i]}_clusters.txt
-		java -jar ${SCRIPTPATH}/snATACClustering.jar splitbams ${BAMFILES[i]} ${CELLBARCODES[i]} $SAMPLECLUSTERFILE $SAMPLEDIR > ${SAMPLEDIR}/splitbams.out &
+		checkConcurrentJobs; java -jar ${SCRIPTPATH}/snATACClustering.jar splitbams ${BAMFILES[i]} ${CELLBARCODES[i]} $SAMPLECLUSTERFILE $SAMPLEDIR > ${SAMPLEDIR}/splitbams.out &
 	done
 
 	wait 
@@ -342,7 +367,7 @@ if [ ${START} -le ${STEP} ] && [ ${END} -ge ${STEP} ]; then
 
 			echo "${SAMPLEDIR6}/${MACSID}_summits.bed" >> $MACSSUMMITS
 
-			macs2 callpeak -t ${CURBAMFILE} -f BAMPE -n ${MACSID} -g 'hs' --nomodel --outdir "${SAMPLEDIR6}" --verbose 0 > ${SAMPLEDIR6}/${MACSID}.out &
+			checkConcurrentJobs; macs2 callpeak -t ${CURBAMFILE} -f BAMPE -n ${MACSID} -g 'hs' --nomodel --outdir "${SAMPLEDIR6}" --verbose 0 > ${SAMPLEDIR6}/${MACSID}.out &
 
 		done < ${SAMPLEDIR6}/bamfiles.txt
 
@@ -404,7 +429,7 @@ if [ ${START} -le ${STEP} ] && [ ${END} -ge ${STEP} ]; then
 
 		echo ${SAMPLEDIR7}/MergeBySample_summits.bed >> $MERGEDFILES
 		
-		java -jar ${SCRIPTPATH}/snATACClustering.jar processpeaks ${MACSSUMMITS} ${CHROMSIZES} ${PEAKEXT} ${SAMPLEDIR7} "MergeBySample" > ${SAMPLEDIR7}/mergebysample.out &
+		checkConcurrentJobs; java -jar ${SCRIPTPATH}/snATACClustering.jar processpeaks ${MACSSUMMITS} ${CHROMSIZES} ${PEAKEXT} ${SAMPLEDIR7} "MergeBySample" > ${SAMPLEDIR7}/mergebysample.out &
 	
 	done
 
@@ -440,7 +465,7 @@ if [ ${START} -le ${STEP} ] && [ ${END} -ge ${STEP} ]; then
 		SAMPLEDIR=${STEP8OUT}/${SAMPLEIDS[i]}
 		mkdir -p "${SAMPLEDIR}"
 		rm -f ${SAMPLEDIR}/CompletionSummary*.txt
-		java -jar ${SCRIPTPATH}/snATACClustering.jar generatepeakcounts ${BAMFILES[i]} ${CELLBARCODES[i]} $PEAKFILE $PEAKEXT $SAMPLEDIR > ${SAMPLEDIR}/generatepeakscounts.out &
+		checkConcurrentJobs; java -jar ${SCRIPTPATH}/snATACClustering.jar generatepeakcounts ${BAMFILES[i]} ${CELLBARCODES[i]} $PEAKFILE $PEAKEXT $SAMPLEDIR > ${SAMPLEDIR}/generatepeakscounts.out &
 	done
 
 	wait
