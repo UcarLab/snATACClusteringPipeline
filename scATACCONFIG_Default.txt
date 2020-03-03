@@ -1,0 +1,11 @@
+START	1	The starting step to run. (Note: Step 0 always runs!) 
+END	11	The last step to run. (Inclusive)
+BINSIZE	2500	The size of the bins used for first pass clustering.
+TOPBINS	50000	The top number of bins used.
+CLUSTERRES	0.8	The cluster resolution used by Seurat. 
+P1MINCLUSTERSIZE	200	The minimum number of cells each cluster must have for pass 1.
+P1NUMPCA	25	The number of components used in pass 1.
+PEAKEXT	250	The amount to extend from the peak summits (3' and 5'). Peaks will be twice this amount.
+TOPPEAKS	200000	The maximum number of peaks used for pass 2 clustering.
+P2NUMPCA	50	The number of components used in pass 1.
+TOPVARIABLEPEAKS	25000	The number of variable peaks used in the final step of pass 2 clustering.
