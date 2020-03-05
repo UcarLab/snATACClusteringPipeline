@@ -135,7 +135,7 @@ cd $OUTDIR
 function checkConcurrentJobs {
 	#Based on the solution provided by user BruceH
 	#https://stackoverflow.com/questions/6593531/running-a-limited-number-of-child-processes-in-parallel-in-bash
-	while [ `jobs | wc -l` -ge $MAXJOBS ]
+	while [ `jobs -r | wc -l` -ge $MAXJOBS ]
 	do
 		sleep $JOBCHECKRATE
 	done
