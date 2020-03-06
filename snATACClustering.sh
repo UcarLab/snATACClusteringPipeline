@@ -5,12 +5,12 @@
 
 
 if [ ${#} != 5 ] ; then
-	echo -e "\nUsage: scATACClustering.sh bamfiles chromsizes configuration outdir scriptpath\n"
+	echo -e "\nUsage: snATACClustering.sh bamfiles chromsizes configuration outdir scriptpath\n"
 	echo -e "bamfiles:\tA tab delimited file where column 1 is a sample name or id column 2 is the path of the bam file and column 3 is the path of the cell barcodes.\n"
 	echo -e "chromsizes:\tA tab delimited file where column 1 is the chromosome and column 2 size of the chromosome.\n"
-	echo -e "configuration:\tA tab delimited file with parameters and values. Use scATACCONFIG_Default.txt as a template.\n"
+	echo -e "configuration:\tA tab delimited file with parameters and values. Use snATACCONFIG_Default.txt as a template.\n"
 	echo -e "outdir:\tThe output directory.\n"
-	echo -e "scriptpath:\tThe path of this script.\n"
+	echo -e "scriptpath:\tThe path of snATACClusteringTools.jar and snATACClustering.R.\n"
 	exit 1
 fi
 
@@ -156,7 +156,7 @@ if [ ${START} -le ${STEP} ] && [ ${END} -ge ${STEP} ]; then
 		mkdir -p "${SAMPLEDIR}"
 		rm -f ${SAMPLEDIR}/CompletionSummary*.txt
 		#Fork multiple java processes using the trailing &
-		checkConcurrentJobs; java -jar ${SCRIPTPATH}/snATACClustering.jar generatebincounts ${BAMFILES[i]} ${CELLBARCODES[i]} $CHROMSIZES $BINSIZE $SAMPLEDIR > ${STEP1OUT}/${SAMPLEIDS[i]}.out &
+		checkConcurrentJobs; java -jar ${SCRIPTPATH}/snATACClusteringTools.jar generatebincounts ${BAMFILES[i]} ${CELLBARCODES[i]} $CHROMSIZES $BINSIZE $SAMPLEDIR > ${STEP1OUT}/${SAMPLEIDS[i]}.out &
 	done
 
 	wait #Wait for the forked processes to finish
@@ -206,7 +206,7 @@ if [ ${START} -le ${STEP} ] && [ ${END} -ge ${STEP} ]; then
 
 	#Merge the bin counts
 
-	java -jar ${SCRIPTPATH}/snATACClustering.jar mergebincounts $STEP2DIRECTORYLIST $CHROMSIZES $BINSIZE $STEP2OUT > ${STEP2OUT}/mergebincounts.out 
+	java -jar ${SCRIPTPATH}/snATACClusteringTools.jar mergebincounts $STEP2DIRECTORYLIST $CHROMSIZES $BINSIZE $STEP2OUT > ${STEP2OUT}/mergebincounts.out 
 
 	#Check if completeded
 	if [ ! -f ${STEP2OUT}/CompletionSummary* ]; then
@@ -249,7 +249,7 @@ if [ ${START} -le ${STEP} ] && [ ${END} -ge ${STEP} ]; then
 		echo "$(dirname ${line})/Total$(basename ${line})" >> $STEP3TOTALFILES
 	done < $STEP3COUNTFILES
 
-	java -jar ${SCRIPTPATH}/snATACClustering.jar generatesparsematrix $STEP3COUNTFILES $STEP3TOTALFILES $TOPBINS $STEP3OUTFILE > ${STEP3OUT}/generatesparsematrix.out
+	java -jar ${SCRIPTPATH}/snATACClusteringTools.jar generatesparsematrix $STEP3COUNTFILES $STEP3TOTALFILES $TOPBINS $STEP3OUTFILE > ${STEP3OUT}/generatesparsematrix.out
 	
 	#check if outfile exists
 	if [ ! -f ${STEP3OUTFILE} ]; then
@@ -316,7 +316,7 @@ if [ ${START} -le ${STEP} ] && [ ${END} -ge ${STEP} ]; then
 		rm -f ${SAMPLEDIR}/clusterbam_*.bam
 		rm -f ${SAMPLEDIR}/CompletionSummary*.txt
 		SAMPLECLUSTERFILE=${STEP4OUT}/${SAMPLEIDS[i]}_clusters.txt
-		checkConcurrentJobs; java -jar ${SCRIPTPATH}/snATACClustering.jar splitbams ${BAMFILES[i]} ${CELLBARCODES[i]} $SAMPLECLUSTERFILE $SAMPLEDIR > ${SAMPLEDIR}/splitbams.out &
+		checkConcurrentJobs; java -jar ${SCRIPTPATH}/snATACClusteringTools.jar splitbams ${BAMFILES[i]} ${CELLBARCODES[i]} $SAMPLECLUSTERFILE $SAMPLEDIR > ${SAMPLEDIR}/splitbams.out &
 	done
 
 	wait 
@@ -429,14 +429,14 @@ if [ ${START} -le ${STEP} ] && [ ${END} -ge ${STEP} ]; then
 
 		echo ${SAMPLEDIR7}/MergeBySample_summits.bed >> $MERGEDFILES
 		
-		checkConcurrentJobs; java -jar ${SCRIPTPATH}/snATACClustering.jar processpeaks ${MACSSUMMITS} ${CHROMSIZES} ${PEAKEXT} ${SAMPLEDIR7} "MergeBySample" > ${SAMPLEDIR7}/mergebysample.out &
+		checkConcurrentJobs; java -jar ${SCRIPTPATH}/snATACClusteringTools.jar processpeaks ${MACSSUMMITS} ${CHROMSIZES} ${PEAKEXT} ${SAMPLEDIR7} "MergeBySample" > ${SAMPLEDIR7}/mergebysample.out &
 	
 	done
 
 	wait
 
 
-	java -jar ${SCRIPTPATH}/snATACClustering.jar processpeaks ${MERGEDFILES} ${CHROMSIZES} ${PEAKEXT} ${STEP7OUT} "MergeAll" > ${STEP7OUT}/mergeall.out
+	java -jar ${SCRIPTPATH}/snATACClusteringTools.jar processpeaks ${MERGEDFILES} ${CHROMSIZES} ${PEAKEXT} ${STEP7OUT} "MergeAll" > ${STEP7OUT}/mergeall.out
 
 
 	if [ ! -f ${STEP7OUT}/MergeAll_summits.bed ]; then
@@ -465,7 +465,7 @@ if [ ${START} -le ${STEP} ] && [ ${END} -ge ${STEP} ]; then
 		SAMPLEDIR=${STEP8OUT}/${SAMPLEIDS[i]}
 		mkdir -p "${SAMPLEDIR}"
 		rm -f ${SAMPLEDIR}/CompletionSummary*.txt
-		checkConcurrentJobs; java -jar ${SCRIPTPATH}/snATACClustering.jar generatepeakcounts ${BAMFILES[i]} ${CELLBARCODES[i]} $PEAKFILE $PEAKEXT $SAMPLEDIR > ${SAMPLEDIR}/generatepeakscounts.out &
+		checkConcurrentJobs; java -jar ${SCRIPTPATH}/snATACClusteringTools.jar generatepeakcounts ${BAMFILES[i]} ${CELLBARCODES[i]} $PEAKFILE $PEAKEXT $SAMPLEDIR > ${SAMPLEDIR}/generatepeakscounts.out &
 	done
 
 	wait
@@ -517,7 +517,7 @@ if [ ${START} -le ${STEP} ] && [ ${END} -ge ${STEP} ]; then
 	done
 	
 
-	java -jar ${SCRIPTPATH}/snATACClustering.jar mergepeakcounts $STEP9COUNTFILES $STEP9TOTALFILES $PEAKEXT $STEP9OUT > ${STEP9OUT}/mergepeakcounts.out
+	java -jar ${SCRIPTPATH}/snATACClusteringTools.jar mergepeakcounts $STEP9COUNTFILES $STEP9TOTALFILES $PEAKEXT $STEP9OUT > ${STEP9OUT}/mergepeakcounts.out
 
 	
 	#check if outfile exists #TODO
@@ -560,7 +560,7 @@ if [ ${START} -le ${STEP} ] && [ ${END} -ge ${STEP} ]; then
 	echo "${STEP9OUT}/TotalMergedPeakCounts_${PEAKEXT}.txt" > ${STEP10TOTALFILES}
 
 
-	java -jar ${SCRIPTPATH}/snATACClustering.jar generatesparsematrix $STEP10COUNTFILES $STEP10TOTALFILES $TOPPEAKS $STEP10OUTFILE > ${STEP10OUT}/step10sparsematrix.out
+	java -jar ${SCRIPTPATH}/snATACClusteringTools.jar generatesparsematrix $STEP10COUNTFILES $STEP10TOTALFILES $TOPPEAKS $STEP10OUTFILE > ${STEP10OUT}/step10sparsematrix.out
 
 	
 	if [ ! -f ${STEP10OUTFILE} ]; then

@@ -129,7 +129,7 @@ for (i in 1:nrow(clusterinfo)){
   cellid = paste("_",split[[1]][2],sep="")
   clustersbysamples[i,1] = sampleid
   clustersbysamples[i,2] = cellid
-  clustersbysamples[i,3] = clusterid
+  clustersbysamples[i,3] = clusterid-1 #Subtracting by 1 to make it consistent with the plots
 }
 
 

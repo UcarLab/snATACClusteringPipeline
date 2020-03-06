@@ -10,7 +10,8 @@ Place the jar in the same directory at the shell script.
 
 R (Tested with verion 3.6.2)
 R Libraries: 
-1. Seurat
-2. Matrix
-3. edgeR
-4. matrixStats
+
+1. Seurat: https://cran.r-project.org/web/packages/Seurat/index.html
+2. EdgeR: https://bioconductor.org/packages/release/bioc/html/edgeR.html
+3. Matrix: https://cran.r-project.org/web/packages/Matrix/index.html
+4. matrixStats: https://cran.r-project.org/web/packages/matrixStats/index.html
